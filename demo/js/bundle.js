@@ -1464,7 +1464,8 @@
       } else   {
         newPos++;
       }
-      p1 = resultEvents[newPos].point;
+      if (newPos < length)
+        { p1 = resultEvents[newPos].point; }
     }
 
     newPos = pos - 1;
@@ -1707,8 +1708,32 @@
     return eventQueue;
   }
 
-  var EMPTY = [];
+  // Validity definition comes from RFC 7946 sections 3.1.6 and 3.1.7 - https://tools.ietf.org/html/rfc7946
 
+  function isValidPolygonRing(ringCoords) {
+    return ringCoords.length && ringCoords.length > 3 &&
+      ringCoords[0][0] === ringCoords[ringCoords.length - 1][0] &&
+      ringCoords[0][1] === ringCoords[ringCoords.length - 1][1];
+  }
+
+  var is_valid_multipolygon = function isValidMultiPolygonCoords(coords) {
+    try {
+      if (!coords.length || coords.length < 1) { return false; }
+      for (var polygonI = 0; polygonI < coords.length; ++polygonI) {
+        var polygon = coords[polygonI];
+        if (!polygon.length || polygon.length < 1) { return false; }
+        for (var ringI = 0; ringI < polygon.length; ++ringI) {
+          var ring = polygon[ringI];
+          if (!isValidPolygonRing(ring)) { return false; }
+        }
+      }
+      return true;
+    } catch(ignored) { // If something blows up, coords weren't valid.
+      return false;
+    }
+  };
+
+  var EMPTY = [];
 
   function trivialOperation(subject, clipping, operation) {
     var result = null;
@@ -1752,6 +1777,10 @@
     if (typeof clipping[0][0][0] === 'number') {
       clipping = [clipping];
     }
+
+    if (!is_valid_multipolygon(subject)) { throw new Error('bad subject param'); }
+    if (!is_valid_multipolygon(clipping)) { throw new Error('bad clipping param'); }
+
     var trivial = trivialOperation(subject, clipping, operation);
     if (trivial) {
       return trivial === EMPTY ? null : trivial;

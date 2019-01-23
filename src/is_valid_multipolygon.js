@@ -1,5 +1,3 @@
-'use strict';
-
 // Validity definition comes from RFC 7946 sections 3.1.6 and 3.1.7 - https://tools.ietf.org/html/rfc7946
 
 function isValidPolygonRing(ringCoords) {
@@ -20,7 +18,7 @@ module.exports = function isValidMultiPolygonCoords(coords) {
       }
     }
     return true;
-  } catch (ignored) { // If something blows up, coords weren't valid.
+  } catch(ignored) { // If something blows up, coords weren't valid.
     return false;
   }
 };
